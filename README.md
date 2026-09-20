@@ -78,6 +78,30 @@ SpendClear is new, built during the Cleanverse Build hackathon (Aug 8-9, 2026).
 
 It draws on architectural patterns from [MetaboSpend](https://github.com/icohangar-ops/metabospend), an agent spend governor (78 tests, MIT, built Jul 30 – Aug 2, 2026). No code is shared — only the conceptual model of deny-first gates upstream of payment execution.
 
+## Propagation notes (wave B)
+
+- **Row 6 (dual-authority governor) — reversed.** The on-chain side of the
+  pair exists — `contracts/SpendClear.sol` carries the mandate authority
+  (`createMandate`, `executePayment`, caps, deny-first `_deny` audit) — but
+  the repository contains no off-chain payment-execution client to gate: the
+  web app is a mock-wallet demo (`web/app/page.tsx` `DEMO_WALLETS`, no web3
+  dependency), and `executePayment` has no in-repository caller. A governor
+  here would be a decision function with no caller. Reopens when a real
+  execution client lands that submits `executePayment` through a pre-check
+  the same audit trail records.
+- **Row 7 (Sentinel-style circuit breaker) — reversed.** The reversal
+  condition fires: Sentinel needs a dense, rolling action stream with
+  correlated-failure structure, while SpendClear's action surface is one
+  mandate-gated payment per call — too sparse for autocorrelation-based
+  halting. Reopens if the desk gains a high-frequency autonomous action
+  stream.
+- **Row 8 (attestation-threshold minting) — reversed.** The row's own
+  condition (a minting/issuance function to gate with 3-of-N verifier
+  attestation) does not hold: `contracts/SpendClear.sol` has no mint path —
+  it pays out existing tokens against mandates. There is nothing to
+  threshold-gate. Reopens if a reserve-backed mint function is added to the
+  contract.
+
 ## License
 
 MIT — see [LICENSE](LICENSE). Copyright (c) 2026 Shyam Desigan.
